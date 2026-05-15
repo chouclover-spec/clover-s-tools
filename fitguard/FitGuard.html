@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitGuard - 背景图适配预览</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.5' width='31' height='31' fill='black' stroke='black'/%3E%3Crect x='1' y='23.5' width='7.03125' height='7.5' fill='%23C0FE04'/%3E%3Crect x='8.73438' y='23.2656' width='20.0391' height='7.73438' fill='%23D9D9D9'/%3E%3Crect x='29.2422' y='23.2656' width='1.75781' height='3.51562' fill='%23D9D9D9'/%3E%3Crect x='29.2422' y='27.4844' width='1.75781' height='3.51562' fill='%23D16EAE'/%3E%3Crect x='1' y='1' width='7.03125' height='8.90625' fill='%23D9D9D9'/%3E%3Crect x='1' y='11.0781' width='7.03125' height='11.4844' fill='%23D9D9D9'/%3E%3Crect x='8.73438' y='1' width='22.2656' height='21.5625' fill='%236442D6'/%3E%3C/svg%3E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="FitGuard">
+  <meta name="theme-color" content="#0A0D14">
+  <meta name="description" content="游戏全屏背景图多分辨率适配预览工具">
+  <style>
+:root {
+--bg-base: #0A0D14;
+--bg-panel: #111827;
+--bg-cell: #161B25;
+--border: #2A3547;
+--text-primary: #FFFFFF;
+--text-secondary: #8A9BB0;
+--text-muted: #3D4A5C;
+--accent: #AAFF00;
+--accent-hover: #C8FF40;
+--danger: #FF1744;
+--font: 'Rajdhani', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+--radius: 4px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg-base); color: var(--text-primary); height: 100vh; overflow: hidden; }
+.navbar { height: 60px; background: var(--bg-base); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.navbar-title { font-size: 21px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); }
+.navbar-title span { color: var(--accent); }
+.upload-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 60px); padding: 40px; }
+.upload-droparea { width: 100%; max-width: 600px; height: 280px; border: 2px dashed var(--border); background: var(--bg-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.upload-droparea:hover, .upload-droparea.drag-over { border-color: var(--accent); background: #111d0a; }
+.upload-droparea .icon { font-size: 72px; color: var(--text-muted); }
+.upload-droparea .hint { font-size: 21px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+.upload-droparea .hint-sub { font-size: 18px; color: var(--text-muted); }
+.toolbar { height: 64px; display: flex; align-items: center; gap: 16px; padding: 8px 24px; background: var(--bg-panel); border-bottom: 1px solid var(--border); }
+.toolbar-btn { height: 48px; padding: 0 18px; background: transparent; color: var(--text-secondary); border: 1px solid var(--border); font-family: var(--font); font-size: 17px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: all 0.15s; }
+.toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+.toolbar-btn.active { background: var(--accent); color: var(--bg-base); border-color: var(--accent); }
+.toolbar-spacer { flex: 1; }
+.overview { height: calc(100vh - 60px - 64px); padding: 12px; overflow: hidden; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; height: 100%; }
+.preview-card { background: var(--bg-panel); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.preview-card-canvas-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px; }
+.preview-card canvas { max-width: 100%; max-height: 100%; display: block; }
+.preview-card-info { flex-shrink: 0; padding: 9px 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); }
+.preview-card-ratio { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.preview-card-res { font-size: 17px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.preview-card[data-ratio="4:3"] { border-left: 3px solid #FF6D00; }
+.preview-card[data-ratio="16:9"] { border-left: 3px solid #2979FF; }
+.preview-card[data-ratio="21:9"] { border-left: 3px solid #00C853; }
+.preview-card[data-ratio="32:9"] { border-left: 3px solid #F50057; }
+.overlay-view { display: flex; flex-direction: column; align-items: center; height: calc(100vh - 60px - 64px); overflow: auto; }
+.overlay-controls { display: flex; align-items: center; gap: 20px; padding: 8px 24px; background: var(--bg-panel); border-bottom: 1px solid var(--border); width: 100%; flex-shrink: 0; }
+.overlay-controls label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 20px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.overlay-controls input[type="checkbox"] { cursor: pointer; width: 18px; height: 18px; }
+.color-dot { display: inline-block; width: 15px; height: 15px; border-radius: 2px; }
+.overlay-view canvas { max-width: calc(100% - 48px); height: auto; margin: 24px auto; }
+.hidden { display: none !important; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div id="splash" style="position:fixed;inset:0;background:#0A0D14;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s">
+    <div style="text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#AAFF00;font-family:Rajdhani">FITGUARD</div>
+      <div style="font-size:11px;color:#3D4A5C;margin-top:4px">v1.0</div>
+    </div>
+  </div>
+  <script>setTimeout(()=>{const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.remove(),300)},500)</script>
+
+  <nav class="navbar">
+    <div class="navbar-title">FitGuard <span>·</span> 背景适配预览</div>
+  </nav>
+
+  <section class="upload-zone" id="uploadZone">
+    <div class="upload-droparea" id="droparea">
+      <div class="icon">📁</div>
+      <div class="hint">拖拽图片到此处，或点击选择</div>
+      <div class="hint-sub">支持 JPG、PNG、WebP</div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+  </section>
+
+  <main class="hidden" id="mainContent">
+    <div class="toolbar">
+      <button class="toolbar-btn active" data-mode="overview">总览</button>
+      <button class="toolbar-btn" data-mode="overlay">叠加</button>
+      <div class="toolbar-spacer"></div>
+      <button class="toolbar-btn" id="btnNewImage">换图</button>
+    </div>
+
+    <section class="overview" id="overviewSection">
+      <div class="preview-grid" id="previewGrid"></div>
+    </section>
+
+    <section class="overlay-view hidden" id="overlaySection">
+      <div class="overlay-controls" id="overlayControls">
+        <label data-ratio="4:3"><input type="checkbox" checked> <span class="color-dot" style="background:#FF6D00"></span> 4:3</label>
+        <label data-ratio="16:9"><input type="checkbox"> <span class="color-dot" style="background:#2979FF"></span> 16:9</label>
+        <label data-ratio="21:9"><input type="checkbox"> <span class="color-dot" style="background:#00C853"></span> 21:9</label>
+        <label data-ratio="32:9"><input type="checkbox"> <span class="color-dot" style="background:#F50057"></span> 32:9</label>
+      </div>
+      <canvas id="overlayCanvas"></canvas>
+    </section>
+  </main>
+
+  <script>
+const DESIGN = {
+  bgWidth: 2720, bgHeight: 1440, uiWidth: 2560, uiHeight: 1440,
+  safeWidth: 1920, safeHeight: 1080, padding: 80
+};
+
+const ASPECT_RATIOS = [
+  { ratio: '4:3', w: 1920, h: 1440, color: '#FF6D00' },
+  { ratio: '16:9', w: 2560, h: 1440, color: '#2979FF' },
+  { ratio: '21:9', w: 3440, h: 1440, color: '#00C853' },
+  { ratio: '32:9', w: 3840, h: 1080, color: '#F50057' }
+];
+
+let sourceImage = null;
+let maskImgL = null;
+let maskImgR = null;
+
+function generateMasks() {
+  const maskW = 640, maskH = 1080;
+  const solidW = 560;
+  const bgColor = '#0A0D14';
+
+  const cL = document.createElement('canvas');
+  cL.width = maskW; cL.height = maskH;
+  const ctxL = cL.getContext('2d');
+  const gL = ctxL.createLinearGradient(0, 0, maskW, 0);
+  gL.addColorStop(0, bgColor);
+  gL.addColorStop(solidW / maskW, bgColor);
+  gL.addColorStop(1, 'rgba(10,13,20,0)');
+  ctxL.fillStyle = gL;
+  ctxL.fillRect(0, 0, maskW, maskH);
+
+  const cR = document.createElement('canvas');
+  cR.width = maskW; cR.height = maskH;
+  const ctxR = cR.getContext('2d');
+  const gR = ctxR.createLinearGradient(0, 0, maskW, 0);
+  gR.addColorStop(0, 'rgba(10,13,20,0)');
+  gR.addColorStop((maskW - solidW) / maskW, bgColor);
+  gR.addColorStop(1, bgColor);
+  ctxR.fillStyle = gR;
+  ctxR.fillRect(0, 0, maskW, maskH);
+
+  const loadDataURI = cv => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = cv.toDataURL('image/png');
+  });
+  Promise.all([loadDataURI(cL), loadDataURI(cR)]).then(([l, r]) => {
+    maskImgL = l; maskImgR = r;
+  });
+}
+generateMasks();
+
+const $ = id => document.getElementById(id);
+const droparea = $('droparea');
+const fileInput = $('fileInput');
+const uploadZone = $('uploadZone');
+const mainContent = $('mainContent');
+const previewGrid = $('previewGrid');
+const overviewSection = $('overviewSection');
+const overlaySection = $('overlaySection');
+const overlayCanvas = $('overlayCanvas');
+const btnNewImage = $('btnNewImage');
+
+droparea.addEventListener('click', () => fileInput.click());
+droparea.addEventListener('dragover', e => { e.preventDefault(); droparea.classList.add('drag-over'); });
+droparea.addEventListener('dragleave', () => droparea.classList.remove('drag-over'));
+droparea.addEventListener('drop', e => {
+  e.preventDefault(); droparea.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImage(file);
+});
+fileInput.addEventListener('change', () => { const file = fileInput.files[0]; if (file) loadImage(file); });
+
+function loadImage(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url); sourceImage = img;
+    uploadZone.classList.add('hidden'); mainContent.classList.remove('hidden');
+    renderAll();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert('图片加载失败'); };
+  img.src = url;
+}
+
+function getCropRect(img, ar) {
+  const imgW = img.width, imgH = img.height;
+  const targetRatio = ar.w / ar.h;
+  let cropX, cropY, cropW, cropH;
+  if (ar.ratio === '21:9') {
+    const contentW = Math.min(2560, imgW >= 2720 ? imgW - 160 : imgW);
+    cropW = contentW; cropH = cropW / targetRatio;
+    cropX = (imgW - cropW) / 2; cropY = (imgH - cropH) / 2;
+  } else if (ar.ratio === '32:9') {
+    cropW = Math.min(DESIGN.bgWidth, imgW); cropH = Math.min(ar.h, imgH);
+    cropX = (imgW - cropW) / 2; cropY = (imgH - cropH) / 2;
+  } else {
+    const imgRatio = imgW / imgH;
+    if (imgRatio > targetRatio) { cropH = imgH; cropW = imgH * targetRatio; cropX = (imgW - cropW) / 2; cropY = 0; }
+    else { cropW = imgW; cropH = imgW / targetRatio; cropX = 0; cropY = (imgH - cropH) / 2; }
+  }
+  return { x: cropX, y: cropY, w: cropW, h: cropH };
+}
+
+function draw32_9Masks(ctx, canvasW, canvasH, imgDrawX, imgDrawW, bgColor) {
+  const fadeW = DESIGN.padding * (imgDrawW / DESIGN.bgWidth);
+  const leftEnd = imgDrawX + fadeW;
+  const rightStart = imgDrawX + imgDrawW - fadeW;
+  if (maskImgL && maskImgR) {
+    const scaleL = canvasH / maskImgL.height; ctx.drawImage(maskImgL, 0, 0, maskImgL.width * scaleL, canvasH);
+    const scaleR = canvasH / maskImgR.height; ctx.drawImage(maskImgR, canvasW - maskImgR.width * scaleR, 0, maskImgR.width * scaleR, canvasH);
+  } else {
+    if (leftEnd > 0) {
+      const gradL = ctx.createLinearGradient(0, 0, leftEnd, 0);
+      const s = imgDrawX / leftEnd;
+      gradL.addColorStop(0, bgColor); gradL.addColorStop(Math.max(0, s), bgColor); gradL.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradL; ctx.fillRect(0, 0, leftEnd, canvasH);
+    }
+    if (canvasW > rightStart) {
+      const rw = canvasW - rightStart;
+      const gradR = ctx.createLinearGradient(rightStart, 0, canvasW, 0);
+      const fs = fadeW / rw;
+      gradR.addColorStop(0, 'transparent'); gradR.addColorStop(Math.min(1, fs), bgColor); gradR.addColorStop(1, bgColor);
+      ctx.fillStyle = gradR; ctx.fillRect(rightStart, 0, rw, canvasH);
+    }
+  }
+}
+
+function renderOverview() {
+  previewGrid.innerHTML = '';
+  if (!sourceImage) return;
+  const thumbH = 300;
+  ASPECT_RATIOS.forEach(ar => {
+    const crop = getCropRect(sourceImage, ar);
+    let cardW, cardH;
+    if (ar.ratio === '32:9') { cardH = thumbH; cardW = Math.round(thumbH * (ar.w / ar.h)); }
+    else { cardH = thumbH; cardW = Math.round(thumbH * (crop.w / crop.h)); }
+    const canvas = document.createElement('canvas');
+    canvas.width = cardW; canvas.height = cardH;
+    const ctx = canvas.getContext('2d');
+    if (ar.ratio === '32:9') {
+      const bgColor = '#0A0D14'; ctx.fillStyle = bgColor; ctx.fillRect(0, 0, cardW, cardH);
+      const imgScale = cardH / crop.h; const imgDrawW = crop.w * imgScale; const imgDrawX = (cardW - imgDrawW) / 2;
+      ctx.drawImage(sourceImage, crop.x, crop.y, crop.w, crop.h, imgDrawX, 0, imgDrawW, cardH);
+      draw32_9Masks(ctx, cardW, cardH, imgDrawX, imgDrawW, bgColor);
+    } else { ctx.drawImage(sourceImage, crop.x, crop.y, crop.w, crop.h, 0, 0, cardW, cardH); }
+    const card = document.createElement('div');
+    card.className = 'preview-card'; card.dataset.ratio = ar.ratio;
+    card.innerHTML = `<div class="preview-card-canvas-wrap"><canvas width="${cardW}" height="${cardH}"></canvas></div><div class="preview-card-info"><span class="preview-card-ratio">${ar.ratio}</span><span class="preview-card-res">${ar.w}\u00d7${ar.h}</span></div>`;
+    card.querySelector('canvas').getContext('2d').drawImage(canvas, 0, 0);
+    previewGrid.appendChild(card);
+  });
+}
+
+function getSelectedOverlayRatios() {
+  const selected = [];
+  document.querySelectorAll('#overlayControls input[type="checkbox"]').forEach(chk => {
+    if (chk.checked) { const r = chk.closest('label').dataset.ratio; const ar = ASPECT_RATIOS.find(a => a.ratio === r); if (ar) selected.push(ar); }
+  });
+  return selected;
+}
+
+function renderOverlay() {
+  if (!sourceImage) return;
+  const selectedRatios = getSelectedOverlayRatios();
+  const imgW = sourceImage.width, imgH = sourceImage.height;
+  let designW = imgW;
+  selectedRatios.forEach(ar => { if (ar.ratio === '32:9') designW = Math.max(designW, ar.w); });
+  const scale = Math.min(1, 1200 / designW);
+  overlayCanvas.width = Math.round(designW * scale); overlayCanvas.height = Math.round(imgH * scale);
+  const ctx = overlayCanvas.getContext('2d');
+  ctx.fillStyle = '#0A0D14'; ctx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  const imgOffX = ((designW - imgW) / 2) * scale;
+  ctx.drawImage(sourceImage, 0, 0, imgW, imgH, imgOffX, 0, imgW * scale, imgH * scale);
+  selectedRatios.forEach(ar => {
+    let fx, fy, fw, fh;
+    if (ar.ratio === '32:9') { fx = ((designW - ar.w) / 2) * scale; fy = ((imgH - ar.h) / 2) * scale; fw = ar.w * scale; fh = ar.h * scale; }
+    else { const c = getCropRect(sourceImage, ar); fx = imgOffX + c.x * scale; fy = c.y * scale; fw = c.w * scale; fh = c.h * scale; }
+    ctx.strokeStyle = ar.color; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.strokeRect(fx, fy, fw, fh); ctx.setLineDash([]);
+    ctx.font = 'bold 21px Rajdhani, sans-serif'; ctx.fillStyle = ar.color;
+    ctx.fillText(`${ar.ratio} (${ar.w}\u00d7${ar.h})`, fx + 6, fy + 24);
+  });
+}
+
+function getActiveMode() { return document.querySelector('.toolbar-btn.active')?.dataset.mode || 'overview'; }
+
+document.querySelectorAll('.toolbar-btn[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar-btn[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.mode === 'overview') { overviewSection.classList.remove('hidden'); overlaySection.classList.add('hidden'); }
+    else { overviewSection.classList.add('hidden'); overlaySection.classList.remove('hidden'); renderOverlay(); }
+  });
+});
+
+btnNewImage.addEventListener('click', () => { sourceImage = null; mainContent.classList.add('hidden'); uploadZone.classList.remove('hidden'); fileInput.value = ''; });
+
+document.querySelectorAll('#overlayControls input[type="checkbox"]').forEach(chk => {
+  chk.addEventListener('change', () => { if (!overlaySection.classList.contains('hidden')) renderOverlay(); });
+});
+
+window.addEventListener('resize', () => { if (!sourceImage) return; renderOverview(); if (getActiveMode() === 'overlay') renderOverlay(); });
+
+function renderAll() {
+  const mode = getActiveMode(); renderOverview();
+  if (mode === 'overlay') { overlaySection.classList.remove('hidden'); overviewSection.classList.add('hidden'); renderOverlay(); }
+  else { overviewSection.classList.remove('hidden'); overlaySection.classList.add('hidden'); }
+}
+  </script>
+</body>
+</html>

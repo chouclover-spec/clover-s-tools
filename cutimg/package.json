@@ -1,0 +1,22 @@
+{
+  "name": "cutimg",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev:vite": "vite --port 5173",
+    "dev": "tauri dev",
+    "build": "vite build",
+    "tauri": "tauri",
+    "dist": "tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "vue": "^3.5.30"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "vite": "^8.0.1"
+  }
+}

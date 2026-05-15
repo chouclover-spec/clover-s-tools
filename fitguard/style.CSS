@@ -1,0 +1,278 @@
+/* ========================================
+bg-adapt-preview / style.css
+游戏背景图多分辨率适配预览工具
+======================================== */
+
+/* ---------- 字体 ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+
+/* ---------- CSS 变量（方便改主题） ---------- */
+:root {
+--bg-base: #0A0D14;
+--bg-panel: #111827;
+--bg-cell: #161B25;
+--border: #2A3547;
+--text-primary: #FFFFFF;
+--text-secondary: #8A9BB0;
+--text-muted: #3D4A5C;
+--accent: #AAFF00;
+--accent-hover: #C8FF40;
+--danger: #FF1744;
+--font: 'Rajdhani', sans-serif;
+--radius: 4px;
+}
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: var(--font);
+background: var(--bg-base);
+color: var(--text-primary);
+height: 100vh;
+overflow: hidden;
+}
+/* ---------- 顶部导航栏 ---------- */
+.navbar {
+height: 60px;
+background: var(--bg-base);
+border-bottom: 1px solid var(--border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 24px;
+}
+
+.navbar-title {
+font-size: 21px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.12em;
+color: var(--text-secondary);
+}
+
+.navbar-title span {
+color: var(--accent);
+}
+
+/* ---------- 上传区域（首屏） ---------- */
+.upload-zone {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: calc(100vh - 60px);
+padding: 40px;
+}
+
+.upload-droparea {
+width: 100%;
+max-width: 600px;
+height: 280px;
+border: 2px dashed var(--border);
+background: var(--bg-panel);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 16px;
+cursor: pointer;
+transition: border-color 0.2s, background 0.2s;
+}
+
+.upload-droparea:hover,
+.upload-droparea.drag-over {
+border-color: var(--accent);
+background: #111d0a;
+}
+
+.upload-droparea .icon {
+font-size: 72px;
+color: var(--text-muted);
+}
+
+.upload-droparea .hint {
+font-size: 21px;
+font-weight: 500;
+color: var(--text-secondary);
+text-transform: uppercase;
+letter-spacing: 0.1em;
+}
+
+.upload-droparea .hint-sub {
+font-size: 18px;
+color: var(--text-muted);
+}
+
+/* ---------- 工具栏（上传后显示） ---------- */
+.toolbar {
+height: 64px;
+display: flex;
+align-items: center;
+gap: 16px;
+padding: 8px 24px;
+background: var(--bg-panel);
+border-bottom: 1px solid var(--border);
+}
+
+.toolbar-btn {
+height: 48px;
+padding: 0 18px;
+background: transparent;
+color: var(--text-secondary);
+border: 1px solid var(--border);
+font-family: var(--font);
+font-size: 17px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+cursor: pointer;
+transition: all 0.15s;
+}
+
+.toolbar-btn:hover {
+border-color: var(--accent);
+color: var(--accent);
+}
+
+.toolbar-btn.active {
+background: var(--accent);
+color: var(--bg-base);
+border-color: var(--accent);
+}
+
+.toolbar-spacer {
+flex: 1;
+}
+
+/* ---------- 总览页：缩略图网格 ---------- */
+.overview {
+height: calc(100vh - 60px - 64px);
+padding: 12px;
+overflow: hidden;
+}
+
+.preview-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+grid-template-rows: 1fr 1fr;
+gap: 12px;
+height: 100%;
+}
+
+.preview-card {
+background: var(--bg-panel);
+border: 1px solid var(--border);
+overflow: hidden;
+display: flex;
+flex-direction: column;
+min-height: 0;
+}
+
+.preview-card-canvas-wrap {
+flex: 1;
+min-height: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+overflow: hidden;
+padding: 4px;
+}
+
+.preview-card canvas {
+max-width: 100%;
+max-height: 100%;
+display: block;
+}
+
+.preview-card-info {
+flex-shrink: 0;
+padding: 9px 16px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-top: 1px solid var(--border);
+}
+
+.preview-card-ratio {
+font-size: 24px;
+font-weight: 700;
+color: var(--text-primary);
+}
+
+.preview-card-res {
+font-size: 17px;
+font-weight: 500;
+color: var(--text-secondary);
+text-transform: uppercase;
+letter-spacing: 0.05em;
+}
+
+/* 比例颜色标识 */
+.preview-card[data-ratio="4:3"] { border-left: 3px solid #FF6D00; }
+.preview-card[data-ratio="16:9"] { border-left: 3px solid #2979FF; }
+.preview-card[data-ratio="21:9"] { border-left: 3px solid #00C853; }
+.preview-card[data-ratio="32:9"] { border-left: 3px solid #F50057; }
+
+/* ---------- 叠加模式（所有框线在一张图上） ---------- */
+.overlay-view {
+display: flex;
+flex-direction: column;
+align-items: center;
+height: calc(100vh - 60px - 64px);
+overflow: auto;
+}
+
+.overlay-controls {
+display: flex;
+align-items: center;
+gap: 20px;
+padding: 8px 24px;
+background: var(--bg-panel);
+border-bottom: 1px solid var(--border);
+width: 100%;
+flex-shrink: 0;
+}
+
+.overlay-controls label {
+display: flex;
+align-items: center;
+gap: 6px;
+cursor: pointer;
+font-size: 20px;
+font-weight: 600;
+color: var(--text-secondary);
+text-transform: uppercase;
+letter-spacing: 0.05em;
+}
+
+.overlay-controls input[type="checkbox"] {
+cursor: pointer;
+width: 18px;
+height: 18px;
+}
+
+.color-dot {
+display: inline-block;
+width: 15px;
+height: 15px;
+border-radius: 2px;
+}
+
+.overlay-view canvas {
+max-width: calc(100% - 48px);
+height: auto;
+margin: 24px auto;
+}
+
+/* ---------- 通用 ---------- */
+.hidden { display: none !important; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

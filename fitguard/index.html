@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitGuard - 背景图适配预览</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="FitGuard">
+  <meta name="theme-color" content="#0A0D14">
+  <meta name="description" content="游戏全屏背景图多分辨率适配预览工具">
+  <link rel="stylesheet" href="style.CSS">
+</head>
+<body>
+  <div id="splash" style="position:fixed;inset:0;background:#0A0D14;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s">
+    <div style="text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#AAFF00;font-family:Rajdhani">FITGUARD</div>
+      <div style="font-size:11px;color:#3D4A5C;margin-top:4px">v1.0</div>
+    </div>
+  </div>
+  <script>setTimeout(()=>{const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.remove(),300)},500)</script>
+
+  <nav class="navbar">
+    <div class="navbar-title">FitGuard <span>·</span> 背景适配预览</div>
+  </nav>
+
+  <!-- 上传区域（首屏） -->
+  <section class="upload-zone" id="uploadZone">
+    <div class="upload-droparea" id="droparea">
+      <div class="icon">📁</div>
+      <div class="hint">拖拽图片到此处，或点击选择</div>
+      <div class="hint-sub">支持 JPG、PNG、WebP</div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+  </section>
+
+  <!-- 主内容区（上传后显示） -->
+  <main class="hidden" id="mainContent">
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <button class="toolbar-btn active" data-mode="overview">总览</button>
+      <button class="toolbar-btn" data-mode="overlay">叠加</button>
+      <div class="toolbar-spacer"></div>
+      <button class="toolbar-btn" id="btnNewImage">换图</button>
+    </div>
+
+    <!-- 总览页：缩略图网格 -->
+    <section class="overview" id="overviewSection">
+      <div class="preview-grid" id="previewGrid"></div>
+    </section>
+
+    <!-- 叠加模式 -->
+    <section class="overlay-view hidden" id="overlaySection">
+      <div class="overlay-controls" id="overlayControls">
+        <label data-ratio="4:3"><input type="checkbox" checked> <span class="color-dot" style="background:#FF6D00"></span> 4:3</label>
+        <label data-ratio="16:9"><input type="checkbox"> <span class="color-dot" style="background:#2979FF"></span> 16:9</label>
+        <label data-ratio="21:9"><input type="checkbox"> <span class="color-dot" style="background:#00C853"></span> 21:9</label>
+        <label data-ratio="32:9"><input type="checkbox"> <span class="color-dot" style="background:#F50057"></span> 32:9</label>
+      </div>
+      <canvas id="overlayCanvas"></canvas>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
