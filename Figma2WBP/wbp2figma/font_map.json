@@ -1,0 +1,15 @@
+{
+  "_comment": "UE 字体 family (小写) → Figma {family, style}。未命中走 Inter/Regular 兜底。可按项目扩充。",
+  "roboto": {"family": "Roboto", "style": "Regular"},
+  "roboto bold": {"family": "Roboto", "style": "Bold"},
+  "roboto medium": {"family": "Roboto", "style": "Medium"},
+  "inter": {"family": "Inter", "style": "Regular"},
+  "inter bold": {"family": "Inter", "style": "Bold"},
+  "arial": {"family": "Arial", "style": "Regular"},
+  "arial bold": {"family": "Arial", "style": "Bold"},
+  "microsoft yahei": {"family": "Microsoft YaHei", "style": "Regular"},
+  "microsoft yahei bold": {"family": "Microsoft YaHei", "style": "Bold"},
+  "pingfang sc": {"family": "PingFang SC", "style": "Regular"},
+  "source han sans cn": {"family": "Source Han Sans CN", "style": "Regular"},
+  "noto sans cjk sc": {"family": "Noto Sans SC", "style": "Regular"}
+}

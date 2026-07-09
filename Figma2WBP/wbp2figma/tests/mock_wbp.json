@@ -1,0 +1,79 @@
+{
+  "assetName": "WBP_Mock",
+  "designSize": {"width": 1920, "height": 1080},
+  "root": {
+    "name": "RootCanvas",
+    "umgType": "CanvasPanel",
+    "width": 1920,
+    "height": 1080,
+    "children": [
+      {
+        "name": "Bg",
+        "umgType": "Image",
+        "slot": {
+          "type": "CanvasPanelSlot",
+          "anchors": {"min": {"x": 0.0, "y": 0.0}, "max": {"x": 1.0, "y": 1.0}},
+          "offsets": {"left": 0, "top": 0, "right": 0, "bottom": 0},
+          "alignment": {"x": 0.0, "y": 0.0}
+        },
+        "fillColor": {"r": 0.1, "g": 0.1, "b": 0.12, "a": 1}
+      },
+      {
+        "name": "RightPanel",
+        "umgType": "Image",
+        "slot": {
+          "type": "CanvasPanelSlot",
+          "anchors": {"min": {"x": 0.7, "y": 0.0}, "max": {"x": 1.0, "y": 1.0}},
+          "offsets": {"left": 10, "top": 0, "right": 20, "bottom": 0},
+          "alignment": {"x": 0.0, "y": 0.0}
+        },
+        "fillColor": {"r": 0.2, "g": 0.3, "b": 0.4, "a": 1}
+      },
+      {
+        "name": "Title",
+        "umgType": "TextBlock",
+        "slot": {
+          "type": "CanvasPanelSlot",
+          "anchors": {"min": {"x": 0.5, "y": 0.0}, "max": {"x": 0.5, "y": 0.0}},
+          "offsets": {"left": -100, "top": 20, "right": 200, "bottom": 40},
+          "alignment": {"x": 0.5, "y": 0.0}
+        },
+        "content": "Hello",
+        "fontSize": 24,
+        "fontFamily": "Roboto",
+        "textAlignHorizontal": "Center",
+        "textColor": {"r": 1, "g": 1, "b": 1, "a": 1}
+      },
+      {
+        "name": "List",
+        "umgType": "VerticalBox",
+        "slot": {
+          "type": "CanvasPanelSlot",
+          "anchors": {"min": {"x": 0.0, "y": 0.2}, "max": {"x": 0.0, "y": 0.2}},
+          "offsets": {"left": 50, "top": 50, "right": 300, "bottom": 600},
+          "alignment": {"x": 0.0, "y": 0.0}
+        },
+        "children": [
+          {
+            "name": "Item1",
+            "umgType": "TextBlock",
+            "slot": {"type": "VerticalBoxSlot", "sizeOverride": {"horizontal": "FILL", "vertical": "HUG"}},
+            "content": "Item 1",
+            "fontSize": 18,
+            "fontFamily": "Roboto",
+            "textColor": {"r": 0.9, "g": 0.9, "b": 0.9, "a": 1}
+          },
+          {
+            "name": "Item2",
+            "umgType": "TextBlock",
+            "slot": {"type": "VerticalBoxSlot", "sizeOverride": {"horizontal": "FILL", "vertical": "HUG"}},
+            "content": "Item 2",
+            "fontSize": 18,
+            "fontFamily": "Roboto",
+            "textColor": {"r": 0.9, "g": 0.9, "b": 0.9, "a": 1}
+          }
+        ]
+      }
+    ]
+  }
+}

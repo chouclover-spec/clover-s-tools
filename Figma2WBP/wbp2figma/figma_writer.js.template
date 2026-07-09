@@ -1,0 +1,168 @@
+// figma_writer.js.template
+// 通过 Figma MCP use_figma 执行: 把 scene.json 建成 Figma Component + Variables 主题。
+//
+// 用法: 由编排脚本 (或 Claude) 在调用 use_figma 前, 把下方 SCENE 赋值行里的
+//        场景占位符替换成 scene.json 的对象字面量。占位符之外无外部依赖。
+//
+// 图片: 节点上的 exportImageName 仅登记到 imageNodes 映射返回;
+//        实际 image fill 由编排方用 MCP upload_assets(nodeId=...) 单独上传绑定。
+//        所以本脚本对带 exportImageName 的 RECTANGLE 不设纯色 fill, 留给上传覆盖。
+//
+// 返回 (被 use_figma 捕获): { componentId, componentKey, imageNodes, variableCount }
+
+const SCENE = __SCENE_JSON__;
+
+async function build() {
+  // ── 1. Variables 主题集合 ─────────────────────────────────────
+  const collection = figma.variables.createVariableCollection("UE Theme");
+  const modeId = collection.modes[0].modeId;
+  const colorVarMap = new Map();   // "r,g,b,a" -> Variable
+  let variableCount = 0;
+
+  function colorVar(color, opacity) {
+    const r = color.r, g = color.g, b = color.b;
+    const a = (color.a == null ? 1 : color.a) * (opacity == null ? 1 : opacity);
+    const key = [r, g, b, a].map(n => Number(n).toFixed(3)).join(",");
+    if (colorVarMap.has(key)) return colorVarMap.get(key);
+    const v = figma.variables.createVariable("color/" + key.replace(/[,\.]/g, "-"), collection.id, "COLOR");
+    v.setValueForMode(modeId, { r: r, g: g, b: b, a: a });
+    colorVarMap.set(key, v);
+    variableCount++;
+    return v;
+  }
+
+  function applyFills(node, fills) {
+    if (!fills || !fills.length) return;
+    const f0 = fills[0];
+    if (f0 && f0.type === "SOLID" && f0.color) {
+      const v = colorVar(f0.color, f0.opacity);
+      // 绑定到变量; 失败回退纯色
+      try { node.setBoundVariable("fills", v); return; } catch (e) {}
+      try { node.setBoundVariable("fills", v.id); return; } catch (e) {}
+    }
+    node.fills = fills.map(f => ({
+      type: "SOLID",
+      color: { r: f.color.r, g: f.color.g, b: f.color.b },
+      opacity: (f.color.a == null ? 1 : f.color.a) * (f.opacity == null ? 1 : f.opacity)
+    }));
+  }
+
+  const imageNodes = {};   // exportImageName -> nodeId
+
+  // ── 2. 递归建节点 ─────────────────────────────────────────────
+  async function buildNode(spec, parent) {
+    let node;
+    const hasImage = !!spec.exportImageName;
+
+    if (spec.type === "TEXT") {
+      node = figma.createText();
+      const fn = spec.fontName || { family: "Inter", style: "Regular" };
+      let loaded = false;
+      try { await figma.loadFontAsync(fn); loaded = true; } catch (e) {}
+      if (!loaded) { try { await figma.loadFontAsync({ family: "Inter", style: "Regular" }); loaded = true; } catch (e) {} }
+      if (!loaded) { try { await figma.loadFontAsync({ family: "Roboto", style: "Regular" }); loaded = true; } catch (e) {} }
+      if (loaded) {
+        try { node.fontName = fn; } catch (e) {
+          try { node.fontName = { family: "Inter", style: "Regular" }; } catch (_) {}
+        }
+        try { node.characters = spec.text == null ? "" : String(spec.text); } catch (e) {}
+      }
+      if (spec.fontSize != null) node.fontSize = spec.fontSize;
+      if (spec.textAlignHorizontal) node.textAlignHorizontal = spec.textAlignHorizontal;
+      if (spec.textAlignVertical) node.textAlignVertical = spec.textAlignVertical;
+      if (spec.letterSpacing != null) node.letterSpacing = { value: spec.letterSpacing, unit: "PERCENT" };
+      if (spec.textAutoResize) node.textAutoResize = spec.textAutoResize;
+      if (spec.fills) applyFills(node, spec.fills);
+    } else if (spec.type === "RECTANGLE") {
+      node = figma.createRectangle();
+      if (hasImage) {
+        imageNodes[spec.exportImageName] = node.id;   // image fill 由 upload_assets 后续绑定
+      } else if (spec.fills) {
+        applyFills(node, spec.fills);
+      }
+    } else {
+      // FRAME
+      node = figma.createFrame();
+      node.fills = [];
+      if (spec.fills) applyFills(node, spec.fills);
+      const al = spec.autoLayout;
+      if (al && al.layoutMode) {
+        node.layoutMode = al.layoutMode;
+        if (al.layoutWrap) node.layoutWrap = al.layoutWrap;
+        if (al.itemSpacing != null) node.itemSpacing = al.itemSpacing;
+        if (al.paddingTop != null) node.paddingTop = al.paddingTop;
+        if (al.paddingRight != null) node.paddingRight = al.paddingRight;
+        if (al.paddingBottom != null) node.paddingBottom = al.paddingBottom;
+        if (al.paddingLeft != null) node.paddingLeft = al.paddingLeft;
+        if (al.primaryAxisAlignItems) node.primaryAxisAlignItems = al.primaryAxisAlignItems;
+        if (al.counterAxisAlignItems) node.counterAxisAlignItems = al.counterAxisAlignItems;
+      } else {
+        node.layoutMode = "NONE";  // 子节点绝对定位
+      }
+      if (spec.clipsContent) node.clipsContent = true;
+    }
+
+    node.name = spec.name || "";
+    if (spec.width != null) node.width = spec.width;
+    if (spec.height != null) node.height = spec.height;
+    if (spec.x != null) node.x = spec.x;
+    if (spec.y != null) node.y = spec.y;
+    if (spec.layoutSizingHorizontal) node.layoutSizingHorizontal = spec.layoutSizingHorizontal;
+    if (spec.layoutSizingVertical) node.layoutSizingVertical = spec.layoutSizingVertical;
+    if (spec.cornerRadius != null) node.cornerRadius = spec.cornerRadius;
+    if (spec.strokeWeight != null) node.strokeWeight = spec.strokeWeight;
+    if (spec.strokes) node.strokes = spec.strokes.map(s => ({
+      type: "SOLID",
+      color: { r: s.color.r, g: s.color.g, b: s.color.b },
+      opacity: s.opacity != null ? s.opacity : (s.color.a != null ? s.color.a : 1)
+    }));
+    if (spec.opacity != null) node.opacity = spec.opacity;
+    if (spec.visible === false) node.visible = false;
+    // 混合模式 (PSD/UMG 共用: PASS_THROUGH / MULTIPLY / SCREEN ...)
+    if (spec.blendMode) {
+      try { node.blendMode = spec.blendMode; } catch (e) {}
+    }
+    // 图层效果 (投影/内阴影) — PSD 翻译器产出, UMG scene 无此字段时不影响
+    if (spec.effects) {
+      node.effects = spec.effects.map(e => ({
+        type: e.type,
+        color: { r: e.color.r, g: e.color.g, b: e.color.b },
+        opacity: e.color.a != null ? e.color.a : 1,
+        offset: e.offset || { x: 0, y: 0 },
+        radius: e.radius || 0,
+        spread: 0,
+        visible: true,
+        blendMode: "NORMAL"
+      }));
+    }
+
+    if (parent) parent.appendChild(node);
+
+    for (const c of spec.children || []) {
+      await buildNode(c, node);
+    }
+    return node;
+  }
+
+  // ── 3. 建 root 并打包成 Component ────────────────────────────
+  const root = await buildNode(SCENE.root, null);
+  let componentId = null, componentKey = null;
+  try {
+    const comp = root.createComponent();
+    comp.name = SCENE.assetName || root.name || "WBP";
+    componentId = comp.id;
+    componentKey = comp.key;
+  } catch (e) {
+    // createComponent 要求节点在文档里且无父; root 已无父, 一般不会失败
+    componentId = root.id;
+  }
+
+  return JSON.stringify({
+    componentId: componentId,
+    componentKey: componentKey,
+    imageNodes: imageNodes,
+    variableCount: variableCount
+  });
+}
+
+return build();

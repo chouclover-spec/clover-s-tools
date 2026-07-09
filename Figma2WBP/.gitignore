@@ -1,0 +1,5 @@
+# 生成产物 / 大文件，不要提交
+__pycache__/
+*.pyc
+*.psd
+tests/output/
